@@ -1,8 +1,8 @@
 . lib.sh
-BOOST_DOT_VERSION=1.46.1
-BOOST_JUST_VERSION=1_46
+BOOST_DOT_VERSION=1.49.0
+BOOST_JUST_VERSION=1_49
 BOOST_SHORT_VERSION=boost_${BOOST_JUST_VERSION}
-BOOST_VERSION=boost_1_46_1
+BOOST_VERSION=boost_1_49_0
 download_boost() {
 	download http://downloads.sourceforge.net/project/boost/boost/$BOOST_DOT_VERSION/${BOOST_VERSION}.tar.bz2
 }
@@ -14,7 +14,7 @@ compile_boost() {
 
 	#Boost C++ libraries
 	./bootstrap.sh --prefix=$PREFIX --libdir=$PREFIX/lib --with-icu=$PREFIX || fatal "Failed to configure boost.  Is ICU installed properly?"
-	chk ./bjam $PARALLEL
+	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib64 --layout=tagged link=static,shared threading=single,multi $PARALLEL
 
 	popd
 }
@@ -23,11 +23,6 @@ install_boost() {
 	chk pushd $BOOST_VERSION
 
 	#Boost C++ libraries
-	./bjam install --prefix=$PREFIX || fatal "install boost"
-#	pushd $PREFIX/lib || fatal "cd $PREFIX/lib"
-#	for i in libboost_*-gcc*-mt.*; do
-#		ln -sf $i $(sed 's/-gcc[0-9]*-mt\././' <<<$i) || fatal "Adding symlinks to boost libraries"
-#	done
-#	popd
+	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib64 --layout=tagged link=static,shared threading=single,multi $PARALLEL install || fatal "install boost"
 	popd
 }

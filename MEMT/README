@@ -20,9 +20,9 @@ ruby
 You will also need a tokenizer and an APRA format or Suffix Array language model.  
 
 COMPILATION
-In the avenue/MEMT directory, run:
-../bjam release [-jPARALLELISM]
-Alignment/compile.sh
+In the root directory, run:
+./bjam [-jPARALLELISM]
+MEMT/Alignment/compile.sh
 
 The Alignment/compile.sh command will also download and setup evaluation metrics if they haven't been already.  Downloading the paraphrase corpus takes a while.  
 

@@ -1,0 +1,11 @@
+lib icui18n ;
+
+exe remove_nonlatin
+  : remove_nonlatin.cc /util//tokenize_piece icui18n ;
+
+install dist : remove_nonlatin
+           : <install-dependencies>on <install-type>EXE
+             <install-type>LIB
+             <dll-path>dist
+             <hardcode-dll-paths>true
+           ;

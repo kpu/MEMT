@@ -1,0 +1,112 @@
+project : usage-requirements <include>../ ;
+project : requirements <include>../ <warnings>on ;
+
+import testing ;
+
+lib exception : exception.cc string_piece ;
+
+
+#STRING MANIPULATION
+
+alias string_piece : icui18n ;
+
+alias tokenize_piece : string_piece exception ;
+unit-test tokenize_piece_test : tokenize_piece_test.cc tokenize_piece string_piece ..//boost_unit_test_framework ;
+
+lib icui18n ;
+lib utf8 : utf8.cc icui18n string_piece scoped ..//boost_thread : <use>icui18n ;
+unit-test utf8_test : utf8_test.cc utf8 ..//boost_unit_test_framework icui18n string_piece : <use>icui18n ;
+
+exe lower : lower.cc utf8 ;
+lib icuio ;
+exe process_unicode : process_unicode.cc utf8 ..//boost_program_options icui18n icuio string_piece ;
+
+exe vocab : vocab.cc ;
+
+lib util_options : options.cc ..//boost_program_options ;
+
+lib latex_escape : latex_escape.cc icui18n : <use>icui18n ;
+
+lib ersatz_progress : ersatz_progress.cc ;
+
+exe cat_range : cat_range.cc ;
+
+exe line_diff : line_diff.cc ..//boost_iostreams ;
+
+
+#DEBUGGING
+
+alias debug ;
+
+
+#THREADING
+
+alias pcqueue : ..//boost_thread ;
+alias pool : pcqueue ;
+alias socket_concurrent_iostream ;
+
+exe print_concurrency : print_concurrency.cc ..//boost_thread ;
+
+
+#ALGORITHMS AND DATA STRUCTURES
+
+alias multi_intersection ;
+unit-test multi_intersection_test : multi_intersection_test.cc multi_intersection ..//boost_unit_test_framework ;
+
+alias key_value_packing ;
+unit-test key_value_packing_test : key_value_packing_test.cc key_value_packing ..//boost_unit_test_framework ;
+
+lib bit_packing : bit_packing.cc exception ;
+unit-test bit_packing_test : bit_packing_test.cc bit_packing ..//boost_unit_test_framework ;
+
+alias sorted_uniform : key_value_packing ;
+unit-test sorted_uniform_test : sorted_uniform_test.cc sorted_uniform ..//boost_unit_test_framework ;
+#exe sorted_uniform_timing : sorted_uniform_timing.cc sorted_uniform ;
+
+alias probing_hash_table : key_value_packing ;
+unit-test probing_hash_table_test : probing_hash_table_test.cc probing_hash_table ..//boost_unit_test_framework exception ;
+
+alias joint_sort ;
+unit-test joint_sort_test : joint_sort_test.cc joint_sort ..//boost_unit_test_framework ;
+
+
+#HASHING
+
+alias hash_output ;
+unit-test hash_output_test : hash_output_test.cc hash_output ..//boost_unit_test_framework ;
+
+alias hash_fusion ;
+unit-test hash_fusion_test : hash_fusion_test.cc hash_fusion ..//boost_unit_test_framework ;
+
+lib murmur_hash : murmur_hash.cc ;
+
+
+#NUMBERS
+
+alias log_num ;
+unit-test log_num_test : log_num log_num_test.cc ..//boost_unit_test_framework ;
+alias numbers : log_num ;
+
+
+#N-BEST LISTS
+
+alias n_best ;
+unit-test n_best_test : n_best n_best_test.cc ..//boost_unit_test_framework ;
+
+
+#SYSTEM ACCESS
+lib scoped : file.cc exception ;
+lib util_mmap : mmap.cc scoped ;
+
+lib file_piece : file_piece.cc ersatz_progress exception util_mmap scoped string_piece ..//z ;
+run file_piece_test.cc kenutil ..//boost_unit_test_framework : : file_piece.cc ;
+
+
+alias kenutil : bit_packing ersatz_progress exception util_mmap murmur_hash file_piece exception ..//z ;
+
+install dist : lower vocab print_concurrency line_diff cat_range
+           : <install-dependencies>on <install-type>EXE
+             <install-type>LIB
+             <dll-path>dist
+             <hardcode-dll-paths>true
+           ;

@@ -1,0 +1,2 @@
+lib type : Type.cc ;
+lib phrase : Aligned.cc Punctuation.cc Phrase.cc type ../../Input//input ;

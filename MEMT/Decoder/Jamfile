@@ -1,0 +1,8 @@
+alias completed : /util//numbers ;
+
+lib decoder_config : Config.cc /util//numbers ;
+
+lib decoder_options : Options.cc ../Strategy/Horizon//strategy_horizon_options /util//numbers /util//util_options ../..//boost_program_options ;
+
+lib decoder
+	: decoder_config EndBeam.cc HistoryBeam.cc Score.cc ../Input//input /util//numbers ;

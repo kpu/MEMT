@@ -1,0 +1,18 @@
+import option ;
+import modules ;
+import path ;
+path-constant TOP : . ;
+include $(TOP)/jam-files/sanity.jam ;
+
+boost 104200 ;
+external-lib z ;
+
+project : requirements <threading>multi <address-model>64 <warnings>on $(requirements) ;
+project : default-build release ;
+
+use-project /util : util ;
+use-project /lm : lm ;
+
+build-project lm ;
+build-project util ;
+build-project MEMT ;

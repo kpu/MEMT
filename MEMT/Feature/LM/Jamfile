@@ -1,0 +1,5 @@
+lib feature_lm_config : Config.cc ;
+
+lib feature_lm_sentence : Sentence.cc feature_lm_config /util//numbers ;
+
+lib feature_lm_options : Options.cc feature_lm_config ../../..//boost_program_options ; 

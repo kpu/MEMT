@@ -1,0 +1,5 @@
+This package makes it easier to score machine translation output using multiple metrics.  Currently, it supports BLEU, NIST, TER, and METEOR.  
+
+Installation is simple: run ./setup.sh which installs all the metrics.  Then run ./score.rb .  See INSTALL for more detailed directions.  
+
+Contact heafield+scoring at cs.cmu.edu

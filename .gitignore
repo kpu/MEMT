@@ -1,0 +1,5 @@
+dist
+bin
+*.so
+lm/build_binary
+lm/query

@@ -1,0 +1,3 @@
+lib strategy_graph_options : Options.cc ../Scorer//strategy_scorer_options /util//util_options ;
+
+alias graph : ../../Input//input ../Scorer//scorer /util//numbers ; 

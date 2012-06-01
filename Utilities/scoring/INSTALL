@@ -1,0 +1,7 @@
+Run ./setup.sh .  When that finishes, run ./score.rb for usage instructions.  
+
+Due to licensing issues, the actual metrics are not distributed in the same tarball.  ./setup.sh will download, untar, and compile them in the case of METEOR.  
+
+Run time dependencies are Ruby (scoring script), Perl (detokenizer and BLEU), and Java (METEOR and TER).
+
+At build time you also need Python (METEOR phrase table extraction) and Ant (to build METEOR).

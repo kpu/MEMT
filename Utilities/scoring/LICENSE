@@ -1,0 +1,1 @@
+Everything except lib/shell.rb is LGPL provided in COPYING.LESSER.  lib/shell.rb includes its own license at the top.  

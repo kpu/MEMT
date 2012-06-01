@@ -1,0 +1,26 @@
+    Avenue code is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Avenue code is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with Avenue code.  If not, see <http://www.gnu.org/licenses/>.
+
+Most of the code here is licensed under the LGPL.  There are exceptions which have their own licenses, listed below.  You may not have been provided with some of these directories or files.  
+
+jam-files contains Boost Jam.  See the Boost license in that directory.  
+
+install contains scripts to download and install software, but not the software itself.  Downloaded software has its own license.  
+
+Utilities/scoring contains scripts that download and install metrics.  This license covers METEOR, but not the other metrics.  
+
+Utilities/Tuning/zmert comes from Joshua.  Joshua is LGPL.  
+
+Utilities/Tokenization comes from Moses and Moses is LGPL.  
+
+util/string_piece.hh , util/string_piece.cc , and util/google-sparsehash is Google code and contains its own license.  

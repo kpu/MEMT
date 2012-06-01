@@ -1,0 +1,3 @@
+lib strategy_legacy_options : Options.cc ../Horizon//strategy_horizon_options ../../Feature/Scorer//feature_scorer_options ;
+
+alias legacy : ../Horizon//horizon ../Horizon//hypothesis ../Phrase//phrase ../../Feature/Scorer//scorer ;

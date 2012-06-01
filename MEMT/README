@@ -1,0 +1,82 @@
+This is the multi-engine matchine translation system from Carnegie Mellon.  
+Contact kheafiel+memt at cs.cmu.edu
+The latest release is available from http://kheafield.com/code/ or by asking the author to make a release.  
+
+This document shows how to compile and run the system.  For technical documentation, see http://kheafield.com/professional/.
+
+Paths are relative to the MEMT directory.  
+
+REQUIREMENTS
+We assume the following are installed:
+java (for METEOR and ZMERT)
+python (for METEOR's installation)
+bash
+
+Scripts are provided in ../install for the following (see ../install/README):
+icu >= 4.2
+boost >= 1.42.0
+ruby
+
+You will also need a tokenizer and an APRA format or Suffix Array language model.  
+
+COMPILATION
+In the avenue/MEMT directory, run:
+../bjam release [-jPARALLELISM]
+Alignment/compile.sh
+
+The Alignment/compile.sh command will also download and setup evaluation metrics if they haven't been already.  Downloading the paraphrase corpus takes a while.  
+
+TUNING
+MEMT uses weights tuned to the specific systems begin combined.   This shows how to find those weights using MERT.  
+
+Running MERT requires three files in a working directory: dev.matched, dev.reference, and decoder_config_base .  Below are instructions for creating each of them.  
+
+For each system, create a file containing _tokenized_ 1-best output, one sentence per line.  A tokenizer is not provided.  
+Run
+# Alignment/match.sh system0.txt system1.txt ... systemn.txt >dev.matched
+This runs the METEOR matcher on the system outputs.  
+
+The dev.reference file contains references in plain text.  If there's more than reference, place the references for a single sentence consecutively, like so:
+reference 0 for sentence 0
+reference 1 for sentence 0
+reference 0 for sentence 1
+reference 1 for sentence 1
+This is the format used by METEOR's text files and by ZMERT.  It should be normal text; no need to tokenize or lowercase.  
+
+decoder_config_base contains the decoder configuration without weights.  Here's an example that works alright:
+beam_size = 500
+output.nbest = 300
+horizon.stay_threshold = 0.8
+horizon.method = length
+horizon.radius = 7
+length_normalize = false
+
+score.verbatim0.individual = 2
+score.verbatim0.collective = 2
+score.verbatim0.mask = self exact boundary
+
+score.verbatim1.individual = 3
+score.verbatim1.collective = 3
+score.verbatim1.mask = unknown exact snowball_stem wn_stem wn_synonymy paraphrase artificial self transitive boundary
+
+This will use 5 features per system plus length, LM score and LM OOV count.  The 5 features per system count exact matches for unigrams and bigrams (verbatim0) and separately any type of match for unigrams, bigrams, and trigrams (verbatim1).  
+
+The example configuration file in my MT Marathon 2010 paper Combining Machine Translation Output with Open Source: The Carnegie Mellon Multi-Engine Machine Translation Scheme used quotes around vectors of options.  The quotes should not be used with Boost >= 1.42.0 due to https://svn.boost.org/trac/boost/ticket/850 .  In any case, you're fine leaving them out.  
+
+For documentation of the various options, run scripts/server.sh --help
+
+Launch the decoding server.  Tell it where to find the language model (using --lm.file foo.arpa) and which port to run on (e.g. --port 2000)
+scripts/server.sh --lm.file foo.arpa --port 2000
+It will print "Accepting Connections" when ready.  Background it or go to another terminal.  
+
+Run MERT: scripts/zmert/run.rb working/directory 2000 language
+You can also specify host:port to find the server.   Multiple MERTs can use the same server in parallel.
+
+The end product of the MERT run is working/directory/decoder_config.  
+
+DECODING
+This requires a running decoding server, decoder_config (including tuned weights), and a matched input file.  
+Run scripts/simple_decode.rb 2000 decoder_config matched
+
+SCORING
+The ../Utilities/scoring directory contains a scoring script.  Run score.rb to see options.  Typically you can run score.rb --hyp-tok output.1best --refs-laced reference.txt which produces output.1best.scores.  Run score.rb without an argument for documentation.  

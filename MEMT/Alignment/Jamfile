@@ -1,0 +1,2 @@
+exe SummarizeAlignment : Summarize.cc ../Input//input ;
+exe CherryPick : CherryPick.cc ../Input//input ;

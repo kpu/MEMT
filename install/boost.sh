@@ -14,7 +14,7 @@ compile_boost() {
 
 	#Boost C++ libraries
 	./bootstrap.sh --prefix=$PREFIX --libdir=$PREFIX/lib --with-icu=$PREFIX || fatal "Failed to configure boost.  Is ICU installed properly?"
-	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib64 --layout=tagged link=static,shared threading=single,multi $PARALLEL
+	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib --layout=tagged link=static,shared threading=single,multi $PARALLEL
 
 	popd
 }
@@ -23,6 +23,6 @@ install_boost() {
 	chk pushd $BOOST_VERSION
 
 	#Boost C++ libraries
-	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib64 --layout=tagged link=static,shared threading=single,multi $PARALLEL install || fatal "install boost"
+	chk ./b2 --prefix=$PREFIX --libdir=$PREFIX/lib --layout=tagged link=static,shared threading=single,multi $PARALLEL install || fatal "install boost"
 	popd
 }

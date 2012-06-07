@@ -7,7 +7,7 @@ include $(TOP)/jam-files/sanity.jam ;
 boost 104200 ;
 external-lib z ;
 
-project : requirements <threading>multi <address-model>64 <warnings>on $(requirements) ;
+project : requirements <threading>multi <address-model>64 <warnings>on $(requirements) <include>. ;
 project : default-build release ;
 
 use-project /util : util ;

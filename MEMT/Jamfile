@@ -1,11 +1,13 @@
-project : requirements <include>.. ;
+import symlink ;
+
+project : default-build release ;
 
 build-project Decoder ;
 build-project Input ;
 build-project Output ;
 build-project Controller ;
 
-install dist : Controller//MEMT Input//Dump Alignment//SummarizeAlignment ../lm/filter//filter ../util//kenutil
+install dist : Controller//MEMT Input//Dump Alignment//SummarizeAlignment ../lm/filter//filter ../lm/filter//FilterLM
            : <install-dependencies>on <install-type>EXE <install-type>LIB <dll-path>$(TOP)/MEMT/dist
              <hardcode-dll-paths>true
            ;

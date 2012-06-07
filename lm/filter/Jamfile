@@ -4,4 +4,8 @@ obj main : main.cc : <include>../.. ;
 obj main_nothread : main.cc : <threading>single <define>NTHREAD <include>../.. ;
 
 exe filter : main lm_filter /util//string_piece /util//pool /util//exception /util//file_piece ..//read_arpa ;
+#Same thing, old name.  
+exe FilterLM : main lm_filter /util//string_piece /util//pool /util//exception /util//file_piece ..//read_arpa ;
+
 exe filter_nothread : main_nothread lm_filter /util//string_piece /util//exception /util//file_piece ..//read_arpa : <threading>single ;
+

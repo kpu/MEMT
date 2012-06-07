@@ -5,10 +5,8 @@ build-project Input ;
 build-project Output ;
 build-project Controller ;
 
-install dist : Controller//MEMT Input//Dump Alignment//SummarizeAlignment
-           : <install-dependencies>on <install-type>EXE
-             <install-type>LIB
-             <dll-path>dist
+install dist : Controller//MEMT Input//Dump Alignment//SummarizeAlignment ../lm/filter//filter ../util//kenutil
+           : <install-dependencies>on <install-type>EXE <install-type>LIB <dll-path>$(TOP)/MEMT/dist
              <hardcode-dll-paths>true
            ;
 

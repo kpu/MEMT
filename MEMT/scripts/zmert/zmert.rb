@@ -49,17 +49,16 @@ response=closeme.read.to_i
 closeme.close
 CONCURRENCY = (response==0 ? 1 : response)
 
-def write_zmert_config(directory, metric, refs_per_sentence, nbest)
+def write_zmert_config(directory, zmert_args, refs_per_sentence, nbest)
   write_close(directory + '/zmert_config.txt',
 "-rps #{refs_per_sentence}
 -N #{nbest}
 -cmd #{AVENUE_DIR}/MEMT/scripts/zmert/decoder.rb
--v 1
--decV 1
 -passIt 1
 -thrCnt #{CONCURRENCY}
--m #{metric}
--minIt #{Fuzz.slide_amount}")
+-minIt #{Fuzz.slide_amount}
+#{zmert_args}
+")
 end
 
 LOWERCASER_DIR=AVENUE_DIR + "/util/dist"
@@ -93,6 +92,11 @@ def prepare_working(directory, connection, language)
   else
     "BLEU 4 closest"
   end
+  zmert_args = "-m #{metric}\n" + if File.exists?(directory + "/zmert_config_base") then
+    File.new(directory + "/zmert_config_base").read
+  else
+    "-decV 1\n-v 1"
+  end
 
   #params.txt
   write_params(zmert_work, features)
@@ -102,7 +106,7 @@ def prepare_working(directory, connection, language)
   nbest = base_config.match(/^ *output.nbest *= *([0-9]*) *$/)
   throw "Couldn't parse output.nbest in #{base_config}" unless nbest
   #zmert_config.txt
-  write_zmert_config(zmert_work, metric, refs_per_sentence, nbest[1])
+  write_zmert_config(zmert_work, zmert_args, refs_per_sentence, nbest[1])
   #connection
   write_close(zmert_work + '/connection', connection)
   write_close(zmert_work + '/language', language)

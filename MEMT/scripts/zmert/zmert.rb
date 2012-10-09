@@ -120,7 +120,7 @@ end
 
 def run_zmert(directory)
   Dir.chdir(directory + '/zmert') do
-    command = escape_shell_array(["java", "-Xms1G", "-Xmx3G", "-cp", AVENUE_DIR + "/Utilities/scoring/meteor-1.0/dist/meteor-1.0/meteor.jar:" + AVENUE_DIR + "/Utilities/Tuning/zmert.jar", "joshua.zmert.ZMERT", "-maxMem", "1000", "zmert_config.txt"])
+    command = escape_shell_array(["java", "-Xms1G", "-Xmx3G", "-cp", AVENUE_DIR + "/Utilities/scoring/meteor-1.0/dist/meteor-1.0/meteor.jar:" + AVENUE_DIR + "/Utilities/Tuning/zmert.jar", "-maxMem", "1000", "zmert_config.txt"])
     $stdout.puts "Running #{command}"
     throw "Command '#{command}' failed" unless system(command)
   end

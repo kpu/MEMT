@@ -1,6 +1,6 @@
 alias decoder_handler : ../Output//null_beam_dumper ../Decoder//decoder ../Strategy/Legacy//legacy ..//..//boost_thread ;
 alias output_handler : ../Output//output ..//..//boost_thread ;
-alias sentence : decoder_handler output_handler ../Decoder//completed ../Decoder//decoder_config ../Input//input_read /util//pool ;
+alias sentence : decoder_handler output_handler ../Decoder//completed ../Decoder//decoder_config ../Input//input /util//pool ;
 
 alias connection : sentence Sentence//controller_sentence_options /util//socket_concurrent_iostream ..//..//boost_system ;
 

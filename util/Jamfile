@@ -102,7 +102,7 @@ lib file_piece : file_piece.cc ersatz_progress exception util_mmap scoped string
 run file_piece_test.cc kenutil ..//boost_unit_test_framework : : file_piece.cc ;
 
 
-alias kenutil : bit_packing ersatz_progress exception util_mmap murmur_hash file_piece exception ..//z ;
+alias kenutil : bit_packing ersatz_progress exception util_mmap murmur_hash file_piece exception ..//z : : : <library>scoped ;
 
 install dist : lower vocab print_concurrency line_diff cat_range
            : <install-dependencies>on <install-type>EXE

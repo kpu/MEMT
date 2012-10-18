@@ -1,5 +1,4 @@
-lib read_arpa : lm_exception.cc read_arpa.cc ../util//kenutil : <include>..  ;
-lib kenlm : bhiksha.cc binary_format.cc config.cc model.cc quantize.cc read_arpa search_hashed.cc search_trie.cc trie.cc trie_sort.cc virtual_interface.cc vocab.cc ../util//kenutil : <include>.. : : <include>.. <library>../util//kenutil ;
+lib kenlm : bhiksha.cc binary_format.cc config.cc model.cc quantize.cc lm_exception.cc read_arpa.cc search_hashed.cc search_trie.cc trie.cc trie_sort.cc virtual_interface.cc vocab.cc ../util//kenutil : <include>.. : : <include>.. <library>../util//kenutil ;
 
 alias ngram : kenlm ;
 

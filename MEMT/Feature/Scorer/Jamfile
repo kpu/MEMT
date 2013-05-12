@@ -1,3 +1,3 @@
 lib feature_scorer_options : Options.cc ../LM//feature_lm_options ../Verbatim//feature_verbatim_options /util//numbers /util//util_options /util//tokenize_piece ;
 
-lib scorer : Config.cc Fuzz.cc /util//numbers ;
+lib scorer : Config.cc Fuzz.cc ../LM//feature_lm_config /util//numbers ;

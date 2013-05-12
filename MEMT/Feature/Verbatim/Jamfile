@@ -1,2 +1,2 @@
-lib feature_verbatim_options : Options.cc /util//util_options ;
+lib feature_verbatim_options : Options.cc ../../Input//align_type /util//util_options ;
 lib verbatim_sentence : Sentence.cc ../../Input//input ;

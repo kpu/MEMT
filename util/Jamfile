@@ -20,7 +20,6 @@ lib utf8 : utf8.cc string_piece scoped ..//boost_thread icu ;
 unit-test utf8_test : utf8_test.cc utf8 ..//boost_unit_test_framework icu string_piece ;
 
 exe lower : lower.cc utf8 ;
-exe process_unicode : process_unicode.cc utf8 ..//boost_program_options icu string_piece ;
 
 exe vocab : vocab.cc ;
 

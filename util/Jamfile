@@ -8,24 +8,25 @@ lib exception : exception.cc string_piece ;
 
 #STRING MANIPULATION
 
-alias string_piece : icui18n ;
+icuflags = [ _shell "icu-config --ldflags" ] ;
+alias icu : : : : <linkflags>$(icuflags) ;
+
+alias string_piece : icu ;
 
 alias tokenize_piece : string_piece exception ;
 unit-test tokenize_piece_test : tokenize_piece_test.cc tokenize_piece string_piece ..//boost_unit_test_framework ;
 
-lib icui18n ;
-lib utf8 : utf8.cc icui18n string_piece scoped ..//boost_thread : <use>icui18n ;
-unit-test utf8_test : utf8_test.cc utf8 ..//boost_unit_test_framework icui18n string_piece : <use>icui18n ;
+lib utf8 : utf8.cc string_piece scoped ..//boost_thread icu ;
+unit-test utf8_test : utf8_test.cc utf8 ..//boost_unit_test_framework icu string_piece ;
 
 exe lower : lower.cc utf8 ;
-lib icuio ;
-exe process_unicode : process_unicode.cc utf8 ..//boost_program_options icui18n icuio string_piece ;
+exe process_unicode : process_unicode.cc utf8 ..//boost_program_options icu string_piece ;
 
 exe vocab : vocab.cc ;
 
 lib util_options : options.cc ..//boost_program_options ;
 
-lib latex_escape : latex_escape.cc icui18n : <use>icui18n ;
+lib latex_escape : latex_escape.cc icu ;
 
 lib ersatz_progress : ersatz_progress.cc ;
 

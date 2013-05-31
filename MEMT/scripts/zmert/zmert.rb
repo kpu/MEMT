@@ -103,7 +103,7 @@ def prepare_working(directory, connection, language)
   #dec_cfg.txt
   write_feature_config(zmert_work, features)
 
-  nbest = base_config.match(/^ *output.nbest *= *([0-9]*) *$/)
+  nbest = base_config.match(/^\s*output.nbest\s*=\s*([0-9]*)\s*$/)
   throw "Couldn't parse output.nbest in #{base_config}" unless nbest
   #zmert_config.txt
   write_zmert_config(zmert_work, zmert_args, refs_per_sentence, nbest[1])

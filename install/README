@@ -8,24 +8,11 @@ or
 source /some/prefix/directory/environment.tcsh
 depending on your shell to setup the environment to use the installed packages.  
 
-Packages are:
-antlr-2 antlr-3 apr apr-util boost boost_jam ftjam git icu neon openssl ruby sasl sqlite sri subversion wordnet
-
-You probably don't need all of them.  All the packages except sri download their source automatically.
-
-For MEMT's dependencies, run ./install.sh /some/prefix/directory "icu boost boost_jam ruby" -jparallelism
+For MEMT's dependencies, run ./install.sh /some/prefix/directory "icu boost ruby" -jparallelism
 
 Dependencies:
-MEMT decoder source code (provided separately) -> icu boost boost_jam
-MEMT tuning scripts (provided separately) -> ruby
+MEMT decoder source code (provided in memt.tar.gz) -> icu boost
+MEMT tuning scripts (provided in memt.tar.gz) -> ruby
 boost -> icu
-git -> openssl
-git with git svn support -> subversion
-subversion -> apr apr-util openssl sasl sqlite
-subversion with ruby support -> ruby
-neon -> openssl
-apr-util -> apr
-socat -> openssl
-
 
 Note that there is no separate make and make install as some packages' make depends on other packages' make install, so there would be several iterations.  

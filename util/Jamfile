@@ -8,7 +8,7 @@ lib exception : exception.cc string_piece ;
 
 #STRING MANIPULATION
 
-icuflags = [ _shell "icu-config --ldflags" ] ;
+icuflags = [ shell_or_fail "icu-config --ldflags" ] ;
 alias icu : : : : <linkflags>$(icuflags) ;
 
 alias string_piece : icu ;

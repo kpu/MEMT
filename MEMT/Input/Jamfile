@@ -1,12 +1,12 @@
-alias horizon_config : /util//numbers ;
+alias horizon_config : /util//kenutil ;
 
-lib input_options : Options.cc ../Strategy/Horizon//strategy_horizon_options /util//numbers /util//util_options ../..//boost_program_options ;
+lib input_options : Options.cc ../Strategy/Horizon//strategy_horizon_options /util//kenutil ../..//boost_program_options ;
 
 lib align_type : AlignType.cc ../..//boost_thread ;
 
-lib input_alignment : Alignment.cc align_type /util//numbers ;
+lib input_alignment : Alignment.cc align_type /util//kenutil ;
 
 lib input
-	: Capitalization.cc Format.cc Text.cc Transitive.cc ReadDispatcher.cc ReadFromJava.cc Read.cc align_type input_options input_alignment /util//utf8 /util//numbers /util//string_piece /util//latex_escape /util//murmur_hash /util//icu ;
+	: Capitalization.cc Format.cc Text.cc Transitive.cc ReadDispatcher.cc ReadFromJava.cc Read.cc align_type input_options input_alignment /util//kenutil ;
 
-exe Dump : Dump.cc input /util//numbers ;
+exe Dump : Dump.cc input /util//kenutil ;

@@ -1,4 +1,5 @@
 #include "MEMT/Input/AlignType.hh"
+#include "util/string_piece_hash.hh"
 
 #include <boost/thread/once.hpp>
 #include <boost/unordered_map.hpp>

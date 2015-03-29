@@ -1,5 +1,5 @@
-#ifndef LM_FACADE__
-#define LM_FACADE__
+#ifndef LM_FACADE_H
+#define LM_FACADE_H
 
 #include "lm/virtual_interface.hh"
 #include "util/string_piece.hh"
@@ -16,19 +16,28 @@ template <class Child, class StateT, class VocabularyT> class ModelFacade : publ
     typedef StateT State;
     typedef VocabularyT Vocabulary;
 
-    // Default Score function calls FullScore.  Model can override this.  
-    float Score(const State &in_state, const WordIndex new_word, State &out_state) const {
-      return static_cast<const Child*>(this)->FullScore(in_state, new_word, out_state).prob;
-    }
-
     /* Translate from void* to State */
-    FullScoreReturn FullScore(const void *in_state, const WordIndex new_word, void *out_state) const {
+    FullScoreReturn BaseFullScore(const void *in_state, const WordIndex new_word, void *out_state) const {
       return static_cast<const Child*>(this)->FullScore(
           *reinterpret_cast<const State*>(in_state),
           new_word,
           *reinterpret_cast<State*>(out_state));
     }
-    float Score(const void *in_state, const WordIndex new_word, void *out_state) const {
+
+    FullScoreReturn BaseFullScoreForgotState(const WordIndex *context_rbegin, const WordIndex *context_rend, const WordIndex new_word, void *out_state) const {
+      return static_cast<const Child*>(this)->FullScoreForgotState(
+          context_rbegin,
+          context_rend,
+          new_word,
+          *reinterpret_cast<State*>(out_state));
+    }
+
+    // Default Score function calls FullScore.  Model can override this.  
+    float Score(const State &in_state, const WordIndex new_word, State &out_state) const {
+      return static_cast<const Child*>(this)->FullScore(in_state, new_word, out_state).prob;
+    }
+
+    float BaseScore(const void *in_state, const WordIndex new_word, void *out_state) const {
       return static_cast<const Child*>(this)->Score(
           *reinterpret_cast<const State*>(in_state),
           new_word,
@@ -61,4 +70,4 @@ template <class Child, class StateT, class VocabularyT> class ModelFacade : publ
 } // mamespace base
 } // namespace lm
 
-#endif // LM_FACADE__
+#endif // LM_FACADE_H

@@ -9,7 +9,7 @@
 #include "MEMT/Input/Input.hh"
 
 #include "util/pcqueue.hh"
-#include "util/pool.hh"
+#include "util/thread_pool.hh"
 
 #include <boost/ref.hpp>
 #include <boost/scoped_array.hpp>
@@ -113,7 +113,7 @@ template <class StrategyProcessT> class SentenceTransition : boost::noncopyable 
     boost::scoped_array<Request> requests_;
     util::PCQueue<Request*> free_requests_;
 
-    util::Pool<DecoderHandler<Self> > decoder_;
+    util::ThreadPool<DecoderHandler<Self> > decoder_;
 
     const std::vector<unsigned char> lm_orders_;
 };

@@ -1,3 +1,3 @@
-lib hypothesis : Hypothesis.cc /util//numbers ../Phrase//phrase ../../Input//input ;
-lib strategy_horizon_options : Options.cc /util//util_options ;
-lib horizon : Horizon.cc ../../Input//input ;
+fakelib hypothesis : Hypothesis.cc /util//kenutil ../Phrase//phrase ../../Input//input ;
+fakelib strategy_horizon_options : Options.cc /util//kenutil ;
+fakelib horizon : Horizon.cc ../../Input//input ;

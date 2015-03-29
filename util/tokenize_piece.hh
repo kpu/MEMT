@@ -1,5 +1,5 @@
-#ifndef UTIL_TOKENIZE_PIECE__
-#define UTIL_TOKENIZE_PIECE__
+#ifndef UTIL_TOKENIZE_PIECE_H
+#define UTIL_TOKENIZE_PIECE_H
 
 #include "util/exception.hh"
 #include "util/string_piece.hh"
@@ -7,58 +7,10 @@
 #include <boost/iterator/iterator_facade.hpp>
 
 #include <algorithm>
-#include <iostream>
+
+#include <string.h>
 
 namespace util {
-
-// Tokenize a StringPiece using an iterator interface.  boost::tokenizer doesn't work with StringPiece.
-template <char d> class PieceIterator : public boost::iterator_facade<PieceIterator<d>, const StringPiece, boost::forward_traversal_tag> {
-  public:
-    // Default construct is end, which is also accessed by kEndPieceIterator;
-    PieceIterator() {}
-
-    explicit PieceIterator(const StringPiece &str)
-      : after_(str) {
-        increment();
-      }
-
-    bool operator!() const {
-      return after_.data() == 0;
-    }
-    operator bool() const {
-      return after_.data() != 0;
-    }
-
-    static PieceIterator<d> end() {
-      return PieceIterator<d>();
-    }
-
-  private:
-    friend class boost::iterator_core_access;
-
-    void increment() {
-      const char *start = after_.data();
-      for (; (start != after_.data() + after_.size()) && (d == *start); ++start) {}
-      if (start == after_.data() + after_.size()) {
-        // End condition.
-        after_.clear();
-        return;
-      }
-      const char *finish = start;
-      for (; (finish != after_.data() + after_.size()) && (d != *finish); ++finish) {}
-      current_ = StringPiece(start, finish - start);
-      after_ = StringPiece(finish, after_.data() + after_.size() - finish);
-    }
-
-    bool equal(const PieceIterator &other) const {
-      return after_.data() == other.after_.data();
-    }
-
-    const StringPiece &dereference() const { return current_; }
-
-    StringPiece current_;
-    StringPiece after_;
-};
 
 // Thrown on dereference when out of tokens to parse
 class OutOfTokens : public Exception {
@@ -69,6 +21,7 @@ class OutOfTokens : public Exception {
 
 class SingleCharacter {
   public:
+    SingleCharacter() {}
     explicit SingleCharacter(char delim) : delim_(delim) {}
 
     StringPiece Find(const StringPiece &in) const {
@@ -81,6 +34,8 @@ class SingleCharacter {
 
 class MultiCharacter {
   public:
+    MultiCharacter() {}
+
     explicit MultiCharacter(const StringPiece &delimiter) : delimiter_(delimiter) {}
 
     StringPiece Find(const StringPiece &in) const {
@@ -93,10 +48,49 @@ class MultiCharacter {
 
 class AnyCharacter {
   public:
+    AnyCharacter() {}
     explicit AnyCharacter(const StringPiece &chars) : chars_(chars) {}
 
     StringPiece Find(const StringPiece &in) const {
       return StringPiece(std::find_first_of(in.data(), in.data() + in.size(), chars_.data(), chars_.data() + chars_.size()), 1);
+    }
+
+  private:
+    StringPiece chars_;
+};
+
+class BoolCharacter {
+  public:
+    BoolCharacter() {}
+
+    explicit BoolCharacter(const bool *delimiter) { delimiter_ = delimiter; }
+
+    StringPiece Find(const StringPiece &in) const {
+      for (const char *i = in.data(); i != in.data() + in.size(); ++i) {
+        if (delimiter_[static_cast<unsigned char>(*i)]) return StringPiece(i, 1);
+      }
+      return StringPiece(in.data() + in.size(), 0);
+    }
+
+    template <unsigned Length> static void Build(const char (&characters)[Length], bool (&out)[256]) {
+      memset(out, 0, sizeof(out));
+      for (const char *i = characters; i != characters + Length; ++i) {
+        out[static_cast<unsigned char>(*i)] = true;
+      }
+    }
+
+  private:
+    const bool *delimiter_;
+};
+
+class AnyCharacterLast {
+  public:
+    AnyCharacterLast() {}
+
+    explicit AnyCharacterLast(const StringPiece &chars) : chars_(chars) {}
+
+    StringPiece Find(const StringPiece &in) const {
+      return StringPiece(std::find_end(in.data(), in.data() + in.size(), chars_.data(), chars_.data() + chars_.size()), 1);
     }
 
   private:
@@ -118,8 +112,8 @@ template <class Find, bool SkipEmpty = false> class TokenIter : public boost::it
       return current_.data() != 0;
     }
 
-    static TokenIter<Find> end() {
-      return TokenIter<Find>();
+    static TokenIter<Find, SkipEmpty> end() {
+      return TokenIter<Find, SkipEmpty>();
     }
 
   private:
@@ -137,8 +131,8 @@ template <class Find, bool SkipEmpty = false> class TokenIter : public boost::it
       } while (SkipEmpty && current_.data() && current_.empty()); // Compiler should optimize this away if SkipEmpty is false.  
     }
 
-    bool equal(const TokenIter<Find> &other) const {
-      return after_.data() == other.after_.data();
+    bool equal(const TokenIter<Find, SkipEmpty> &other) const {
+      return current_.data() == other.current_.data();
     }
 
     const StringPiece &dereference() const {
@@ -154,4 +148,4 @@ template <class Find, bool SkipEmpty = false> class TokenIter : public boost::it
 
 } // namespace util
 
-#endif // UTIL_TOKENIZE_PIECE__
+#endif // UTIL_TOKENIZE_PIECE_H

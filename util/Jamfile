@@ -1,112 +1,44 @@
-project : usage-requirements <include>../ ;
-project : requirements <include>../ <warnings>on ;
+local compressed_flags = <include>.. <define>HAVE_ZLIB ;
+local compressed_deps = /top//z ;
+if [ test_library "bz2" ] && [ test_header "bzlib.h" ] {
+  external-lib bz2 ;
+  compressed_flags += <define>HAVE_BZLIB ;
+  compressed_deps += bz2 ;
+}
+if [ test_library "lzma" ] && [ test_header "lzma.h" ] {
+  external-lib lzma ;
+  compressed_flags += <define>HAVE_XZLIB ;
+  compressed_deps += lzma ;
+}
+
+#rt is needed for clock_gettime on linux.  But it's already included with threading=multi
+lib rt ;
+
+obj read_compressed.o : read_compressed.cc : $(compressed_flags) ;
+alias read_compressed : read_compressed.o $(compressed_deps) ;
+obj read_compressed_test.o : read_compressed_test.cc /top//boost_unit_test_framework : $(compressed_flags) ;
+obj file_piece_test.o : file_piece_test.cc /top//boost_unit_test_framework : $(compressed_flags) ;
+
+icuflags = [ shell_or_fail "icu-config --ldflags" ] ;
+echo ICU flags are $(icuflags) ;
+alias icu : : <linkflags>$(icuflags) : : <linkflags>$(icuflags) ;
+
+fakelib parallel_read : parallel_read.cc : <threading>multi:<source>/top//boost_thread <threading>multi:<define>WITH_THREADS : : <include>.. ;
+
+fakelib kenutil : bit_packing.cc ersatz_progress.cc exception.cc file.cc file_piece.cc latex_escape.cc mmap.cc murmur_hash.cc options.cc parallel_read pool.cc read_compressed scoped.cc string_piece.cc usage.cc utf8.cc icu double-conversion//double-conversion : <include>.. <os>LINUX,<threading>single:<source>rt : : <include>.. ;
+
+exes = ;
+for local p in [ glob *_main.cc ] {
+  local name = [ MATCH "(.*)\_main.cc" : $(p) ] ;
+  exe $(name) : $(p) kenutil ;
+  exes += $(name) ;
+}
+alias programs : $(exes) ;
 
 import testing ;
 
-lib exception : exception.cc string_piece ;
-
-
-#STRING MANIPULATION
-
-icuflags = [ shell_or_fail "icu-config --ldflags" ] ;
-alias icu : : : : <linkflags>$(icuflags) ;
-
-alias string_piece : icu ;
-
-alias tokenize_piece : string_piece exception ;
-unit-test tokenize_piece_test : tokenize_piece_test.cc tokenize_piece string_piece ..//boost_unit_test_framework ;
-
-lib utf8 : utf8.cc string_piece scoped ..//boost_thread icu ;
-unit-test utf8_test : utf8_test.cc utf8 ..//boost_unit_test_framework icu string_piece ;
-
-exe lower : lower.cc utf8 ;
-
-exe vocab : vocab.cc ;
-
-lib util_options : options.cc ..//boost_program_options ;
-
-lib latex_escape : latex_escape.cc icu ;
-
-lib ersatz_progress : ersatz_progress.cc ;
-
-exe cat_range : cat_range.cc ;
-
-exe line_diff : line_diff.cc ..//boost_iostreams ;
-
-
-#DEBUGGING
-
-alias debug ;
-
-
-#THREADING
-
-alias pcqueue : ..//boost_thread ;
-alias pool : pcqueue ;
-alias socket_concurrent_iostream ;
-
-exe print_concurrency : print_concurrency.cc ..//boost_thread ;
-
-
-#ALGORITHMS AND DATA STRUCTURES
-
-alias multi_intersection ;
-unit-test multi_intersection_test : multi_intersection_test.cc multi_intersection ..//boost_unit_test_framework ;
-
-alias key_value_packing ;
-unit-test key_value_packing_test : key_value_packing_test.cc key_value_packing ..//boost_unit_test_framework ;
-
-lib bit_packing : bit_packing.cc exception ;
-unit-test bit_packing_test : bit_packing_test.cc bit_packing ..//boost_unit_test_framework ;
-
-alias sorted_uniform : key_value_packing ;
-unit-test sorted_uniform_test : sorted_uniform_test.cc sorted_uniform ..//boost_unit_test_framework ;
-#exe sorted_uniform_timing : sorted_uniform_timing.cc sorted_uniform ;
-
-alias probing_hash_table : key_value_packing ;
-unit-test probing_hash_table_test : probing_hash_table_test.cc probing_hash_table ..//boost_unit_test_framework exception ;
-
-alias joint_sort ;
-unit-test joint_sort_test : joint_sort_test.cc joint_sort ..//boost_unit_test_framework ;
-
-
-#HASHING
-
-alias hash_output ;
-unit-test hash_output_test : hash_output_test.cc hash_output ..//boost_unit_test_framework ;
-
-alias hash_fusion ;
-unit-test hash_fusion_test : hash_fusion_test.cc hash_fusion ..//boost_unit_test_framework ;
-
-lib murmur_hash : murmur_hash.cc ;
-
-
-#NUMBERS
-
-alias log_num ;
-unit-test log_num_test : log_num log_num_test.cc ..//boost_unit_test_framework ;
-alias numbers : log_num ;
-
-
-#N-BEST LISTS
-
-alias n_best ;
-unit-test n_best_test : n_best n_best_test.cc ..//boost_unit_test_framework ;
-
-
-#SYSTEM ACCESS
-lib scoped : file.cc exception ;
-lib util_mmap : mmap.cc scoped ;
-
-lib file_piece : file_piece.cc ersatz_progress exception util_mmap scoped string_piece ..//z ;
-run file_piece_test.cc kenutil ..//boost_unit_test_framework : : file_piece.cc ;
-
-
-alias kenutil : bit_packing ersatz_progress exception util_mmap murmur_hash file_piece exception ..//z : : : <library>scoped ;
-
-install dist : lower vocab print_concurrency line_diff cat_range
-           : <install-dependencies>on <install-type>EXE
-             <install-type>LIB
-             <dll-path>dist
-             <hardcode-dll-paths>true
-           ;
+run file_piece_test.o kenutil /top//boost_unit_test_framework : : file_piece.cc ;
+for local t in [ glob *_test.cc : file_piece_test.cc read_compressed_test.cc ] {
+    local name = [ MATCH "(.*)\.cc" : $(t) ] ;
+    unit-test $(name) : $(t) kenutil /top//boost_unit_test_framework /top//boost_system ;
+}

@@ -1,8 +1,8 @@
-alias completed : /util//numbers ;
+alias completed : /util//kenutil ;
 
-lib decoder_config : Config.cc /util//numbers ;
+fakelib decoder_config : Config.cc /util//kenutil ;
 
-lib decoder_options : Options.cc ../Strategy/Horizon//strategy_horizon_options /util//numbers /util//util_options ../..//boost_program_options ;
+fakelib decoder_options : Options.cc ../Strategy/Horizon//strategy_horizon_options /util//kenutil ../..//boost_program_options ;
 
-lib decoder
-	: decoder_config EndBeam.cc HistoryBeam.cc Score.cc ../Input//input /util//numbers ;
+fakelib decoder
+	: decoder_config EndBeam.cc HistoryBeam.cc Score.cc ../Input//input /util//kenutil ;

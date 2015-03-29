@@ -1,5 +1,5 @@
-#ifndef UTIL_BIT_PACKING__
-#define UTIL_BIT_PACKING__
+#ifndef UTIL_BIT_PACKING_H
+#define UTIL_BIT_PACKING_H
 
 /* Bit-level packing routines 
  *
@@ -174,6 +174,13 @@ struct BitsMask {
   uint64_t mask;
 };
 
+struct BitAddress {
+  BitAddress(void *in_base, uint64_t in_offset) : base(in_base), offset(in_offset) {}
+
+  void *base;
+  uint64_t offset;
+};
+
 } // namespace util
 
-#endif // UTIL_BIT_PACKING__
+#endif // UTIL_BIT_PACKING_H

@@ -77,7 +77,6 @@ void Load(
           RunLoaded(models, config, service, acceptor, parent_fd);
           break;
         }
-      case lm::ngram::HASH_SORTED:
       default:
         std::cerr << "Unrecognized kenlm model type " << model_type << std::endl;
         abort();

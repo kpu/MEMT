@@ -1,7 +1,5 @@
-lib icui18n ;
-
 exe remove_nonlatin
-  : remove_nonlatin.cc /util//tokenize_piece icui18n ;
+  : remove_nonlatin.cc /util//kenutil /util//icu ;
 
 install dist : remove_nonlatin
            : <install-dependencies>on <install-type>EXE

@@ -12,7 +12,7 @@ void ReadEngine(const Config &config, const std::string &line, unsigned int num_
   words[0].ResetBOS(num_engines, 0);
 
   unsigned int offset = 1;
-  for (util::PieceIterator<' '> original(line); original; ++original, ++offset) {
+  for (util::TokenIter<util::SingleCharacter> original(line, ' '); original; ++original, ++offset) {
     if (offset + 1 > words.size()) {
       words.resize(offset + 1);
     }

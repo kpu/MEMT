@@ -1,6 +1,9 @@
 #include "lm/bhiksha.hh"
+
+#include "lm/binary_format.hh"
 #include "lm/config.hh"
 #include "util/file.hh"
+#include "util/exception.hh"
 
 #include <limits>
 
@@ -14,11 +17,11 @@ DontBhiksha::DontBhiksha(const void * /*base*/, uint64_t /*max_offset*/, uint64_
 const uint8_t kArrayBhikshaVersion = 0;
 
 // TODO: put this in binary file header instead when I change the binary file format again.  
-void ArrayBhiksha::UpdateConfigFromBinary(int fd, Config &config) {
-  uint8_t version;
-  uint8_t configured_bits;
-  util::ReadOrThrow(fd, &version, 1);
-  util::ReadOrThrow(fd, &configured_bits, 1);
+void ArrayBhiksha::UpdateConfigFromBinary(const BinaryFormat &file, uint64_t offset, Config &config) {
+  uint8_t buffer[2];
+  file.ReadForConfig(buffer, 2, offset);
+  uint8_t version = buffer[0];
+  uint8_t configured_bits = buffer[1];
   if (version != kArrayBhikshaVersion) UTIL_THROW(FormatLoadException, "This file has sorted array compression version " << (unsigned) version << " but the code expects version " << (unsigned)kArrayBhikshaVersion);
   config.pointer_bhiksha_bits = configured_bits;
 }
@@ -49,7 +52,7 @@ std::size_t ArrayCount(uint64_t max_offset, uint64_t max_next, const Config &con
 }
 } // namespace
 
-std::size_t ArrayBhiksha::Size(uint64_t max_offset, uint64_t max_next, const Config &config) {
+uint64_t ArrayBhiksha::Size(uint64_t max_offset, uint64_t max_next, const Config &config) {
   return sizeof(uint64_t) * (1 /* header */ + ArrayCount(max_offset, max_next, config)) + 7 /* 8-byte alignment */;
 }
 
@@ -84,9 +87,6 @@ void ArrayBhiksha::FinishedLoading(const Config &config) {
   uint8_t *head_write = reinterpret_cast<uint8_t*>(original_base_);
   *(head_write++) = kArrayBhikshaVersion;
   *(head_write++) = config.pointer_bhiksha_bits;
-}
-
-void ArrayBhiksha::LoadedBinary() {
 }
 
 } // namespace trie

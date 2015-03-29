@@ -1,5 +1,0 @@
-These are language models with a common interface.
-
-sa.* wraps a suffix array language model, implemented in SALM/
-sri.* wraps the SRI language model http://www.speech.sri.com/projects/srilm/, which must be installed
-ngram.* performs the same inference as SRI but is threadsafe and does not require srilm

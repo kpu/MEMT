@@ -1,2 +1,2 @@
-lib type : Type.cc ;
-lib phrase : Aligned.cc Punctuation.cc Phrase.cc type ../../Input//input ;
+fakelib type : Type.cc ;
+fakelib phrase : Aligned.cc Punctuation.cc Phrase.cc type ../../Input//input ;

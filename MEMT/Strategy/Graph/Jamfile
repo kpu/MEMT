@@ -1,3 +1,3 @@
-lib strategy_graph_options : Options.cc ../Scorer//strategy_scorer_options /util//util_options ;
+fakelib strategy_graph_options : Options.cc ../Scorer//strategy_scorer_options /util//kenutil ;
 
-alias graph : ../../Input//input ../Scorer//scorer /util//numbers ; 
+alias graph : ../../Input//input ../Scorer//scorer /util//kenutil ; 

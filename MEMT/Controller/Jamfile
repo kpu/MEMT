@@ -1,9 +1,9 @@
 alias decoder_handler : ../Output//null_beam_dumper ../Decoder//decoder ../Strategy/Legacy//legacy ..//..//boost_thread ;
 alias output_handler : ../Output//output ..//..//boost_thread ;
-alias sentence : decoder_handler output_handler ../Decoder//completed ../Decoder//decoder_config ../Input//input /util//pool ;
+alias sentence : decoder_handler output_handler ../Decoder//completed ../Decoder//decoder_config ../Input//input /util//kenutil ;
 
-alias connection : sentence Sentence//controller_sentence_options /util//socket_concurrent_iostream ..//..//boost_system ;
+alias connection : sentence Sentence//controller_sentence_options /util//kenutil ..//..//boost_system ;
 
-lib command_line : CommandLine.cc Sentence//controller_sentence_options ..//..//boost_thread ..//..//boost_program_options ;
+fakelib command_line : CommandLine.cc Sentence//controller_sentence_options ..//..//boost_thread ..//..//boost_program_options ;
 
-exe MEMT : Main.cc connection command_line ../Feature/Verbatim//verbatim_sentence ../Feature/LM//feature_lm_sentence /util//util_options /lm//ngram /util//murmur_hash ;
+exe MEMT : Main.cc connection command_line ../Feature/Verbatim//verbatim_sentence ../Feature/LM//feature_lm_sentence /util//kenutil /lm//kenlm ;

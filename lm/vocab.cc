@@ -32,7 +32,8 @@ const uint64_t kUnknownHash = detail::HashForVocab("<unk>", 5);
 // Sadly some LMs have <UNK>.  
 const uint64_t kUnknownCapHash = detail::HashForVocab("<UNK>", 5);
 
-void ReadWords(int fd, EnumerateVocab *enumerate, WordIndex expected_count) {
+void ReadWords(int fd, EnumerateVocab *enumerate, WordIndex expected_count, uint64_t offset) {
+  util::SeekOrThrow(fd, offset);
   // Check that we're at the right place by reading <unk> which is always first.
   char check_unk[6];
   util::ReadOrThrow(fd, check_unk, 6);
@@ -80,14 +81,9 @@ void WriteWordsWrapper::Add(WordIndex index, const StringPiece &str) {
   buffer_.push_back(0);
 }
 
-void WriteWordsWrapper::Write(int fd) {
-  util::SeekEnd(fd);
-  util::WriteOrThrow(fd, buffer_.data(), buffer_.size());
-}
-
 SortedVocabulary::SortedVocabulary() : begin_(NULL), end_(NULL), enumerate_(NULL) {}
 
-std::size_t SortedVocabulary::Size(std::size_t entries, const Config &/*config*/) {
+uint64_t SortedVocabulary::Size(uint64_t entries, const Config &/*config*/) {
   // Lead with the number of entries.  
   return sizeof(uint64_t) + sizeof(uint64_t) * entries;
 }
@@ -98,6 +94,12 @@ void SortedVocabulary::SetupMemory(void *start, std::size_t allocated, std::size
   begin_ = reinterpret_cast<uint64_t*>(start) + 1;
   end_ = begin_;
   saw_unk_ = false;
+}
+
+void SortedVocabulary::Relocate(void *new_start) {
+  std::size_t delta = end_ - begin_;
+  begin_ = reinterpret_cast<uint64_t*>(new_start) + 1;
+  end_ = begin_ + delta;
 }
 
 void SortedVocabulary::ConfigureEnumerate(EnumerateVocab *to, std::size_t max_entries) {
@@ -116,7 +118,9 @@ WordIndex SortedVocabulary::Insert(const StringPiece &str) {
   }
   *end_ = hashed;
   if (enumerate_) {
-    strings_to_enumerate_[end_ - begin_].assign(str.data(), str.size());
+    void *copied = string_backing_.Allocate(str.size());
+    memcpy(copied, str.data(), str.size());
+    strings_to_enumerate_[end_ - begin_] = StringPiece(static_cast<const char*>(copied), str.size());
   }
   ++end_;
   // This is 1 + the offset where it was inserted to make room for unk.  
@@ -126,7 +130,7 @@ WordIndex SortedVocabulary::Insert(const StringPiece &str) {
 void SortedVocabulary::FinishedLoading(ProbBackoff *reorder_vocab) {
   if (enumerate_) {
     if (!strings_to_enumerate_.empty()) {
-      util::PairedIterator<ProbBackoff*, std::string*> values(reorder_vocab + 1, &*strings_to_enumerate_.begin());
+      util::PairedIterator<ProbBackoff*, StringPiece*> values(reorder_vocab + 1, &*strings_to_enumerate_.begin());
       util::JointSort(begin_, end_, values);
     }
     for (WordIndex i = 0; i < static_cast<WordIndex>(end_ - begin_); ++i) {
@@ -134,6 +138,7 @@ void SortedVocabulary::FinishedLoading(ProbBackoff *reorder_vocab) {
       enumerate_->Add(i + 1, strings_to_enumerate_[i]);
     }
     strings_to_enumerate_.clear();
+    string_backing_.FreeAll();
   } else {
     util::JointSort(begin_, end_, reorder_vocab + 1);
   }
@@ -144,11 +149,11 @@ void SortedVocabulary::FinishedLoading(ProbBackoff *reorder_vocab) {
   bound_ = end_ - begin_ + 1;
 }
 
-void SortedVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to) {
+void SortedVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to, uint64_t offset) {
   end_ = begin_ + *(reinterpret_cast<const uint64_t*>(begin_) - 1);
   SetSpecial(Index("<s>"), Index("</s>"), 0);
   bound_ = end_ - begin_ + 1;
-  if (have_words) ReadWords(fd, to, bound_);
+  if (have_words) ReadWords(fd, to, bound_, offset);
 }
 
 namespace {
@@ -165,15 +170,24 @@ struct ProbingVocabularyHeader {
 
 ProbingVocabulary::ProbingVocabulary() : enumerate_(NULL) {}
 
-std::size_t ProbingVocabulary::Size(std::size_t entries, const Config &config) {
-  return ALIGN8(sizeof(detail::ProbingVocabularyHeader)) + Lookup::Size(entries, config.probing_multiplier);
+uint64_t ProbingVocabulary::Size(uint64_t entries, float probing_multiplier) {
+  return ALIGN8(sizeof(detail::ProbingVocabularyHeader)) + Lookup::Size(entries, probing_multiplier);
 }
 
-void ProbingVocabulary::SetupMemory(void *start, std::size_t allocated, std::size_t /*entries*/, const Config &/*config*/) {
+uint64_t ProbingVocabulary::Size(uint64_t entries, const Config &config) {
+  return Size(entries, config.probing_multiplier);
+}
+
+void ProbingVocabulary::SetupMemory(void *start, std::size_t allocated) {
   header_ = static_cast<detail::ProbingVocabularyHeader*>(start);
   lookup_ = Lookup(static_cast<uint8_t*>(start) + ALIGN8(sizeof(detail::ProbingVocabularyHeader)), allocated);
   bound_ = 1;
   saw_unk_ = false;
+}
+
+void ProbingVocabulary::Relocate(void *new_start) {
+  header_ = static_cast<detail::ProbingVocabularyHeader*>(new_start);
+  lookup_.Relocate(static_cast<uint8_t*>(new_start) + ALIGN8(sizeof(detail::ProbingVocabularyHeader)));
 }
 
 void ProbingVocabulary::ConfigureEnumerate(EnumerateVocab *to, std::size_t /*max_entries*/) {
@@ -191,24 +205,23 @@ WordIndex ProbingVocabulary::Insert(const StringPiece &str) {
     return 0;
   } else {
     if (enumerate_) enumerate_->Add(bound_, str);
-    lookup_.Insert(ProbingVocabuaryEntry::Make(hashed, bound_));
+    lookup_.Insert(ProbingVocabularyEntry::Make(hashed, bound_));
     return bound_++;
   }
 }
 
-void ProbingVocabulary::FinishedLoading(ProbBackoff * /*reorder_vocab*/) {
+void ProbingVocabulary::FinishedLoading() {
   lookup_.FinishedInserting();
   header_->bound = bound_;
   header_->version = kProbingVocabularyVersion;
   SetSpecial(Index("<s>"), Index("</s>"), 0);
 }
 
-void ProbingVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to) {
+void ProbingVocabulary::LoadedBinary(bool have_words, int fd, EnumerateVocab *to, uint64_t offset) {
   UTIL_THROW_IF(header_->version != kProbingVocabularyVersion, FormatLoadException, "The binary file has probing version " << header_->version << " but the code expects version " << kProbingVocabularyVersion << ".  Please rerun build_binary using the same version of the code.");
-  lookup_.LoadedBinary();
   bound_ = header_->bound;
   SetSpecial(Index("<s>"), Index("</s>"), 0);
-  if (have_words) ReadWords(fd, to, bound_);
+  if (have_words) ReadWords(fd, to, bound_, offset);
 }
 
 void MissingUnknown(const Config &config) throw(SpecialWordMissingException) {

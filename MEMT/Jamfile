@@ -12,4 +12,4 @@ install dist : Controller//MEMT Input//Dump Alignment//SummarizeAlignment ../lm/
              <hardcode-dll-paths>true
            ;
 
-alias all : dist ../util//dist ../Utilities/Output//dist ;
+alias all : dist ../util//programs ../Utilities/Output//dist ;

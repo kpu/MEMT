@@ -1,6 +1,6 @@
 alias null_beam_dumper ;
 
-lib output_options : Options.cc ../..//boost_program_options ;
+fakelib output_options : Options.cc ../..//boost_program_options ;
 
-lib output
-	: NBest.cc ToString.cc ../Decoder//completed /util//utf8 ;
+fakelib output
+	: NBest.cc ToString.cc ../Decoder//completed /util//kenutil ;

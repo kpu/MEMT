@@ -1,10 +1,11 @@
-#ifndef LM_FILTER_VOCAB_H__
-#define LM_FILTER_VOCAB_H__
+#ifndef LM_FILTER_VOCAB_H
+#define LM_FILTER_VOCAB_H
 
 // Vocabulary-based filters for language models.
 
 #include "util/multi_intersection.hh"
 #include "util/string_piece.hh"
+#include "util/string_piece_hash.hh"
 #include "util/tokenize_piece.hh"
 
 #include <boost/noncopyable.hpp>
@@ -115,7 +116,7 @@ class Multiple {
     }
 
     template <class Output> void AddNGram(const StringPiece &ngram, const StringPiece &line, Output &output) {
-      AddNGram(util::PieceIterator<' '>(ngram), util::PieceIterator<' '>::end(), line, output);
+      AddNGram(util::TokenIter<util::SingleCharacter, true>(ngram, ' '), util::TokenIter<util::SingleCharacter, true>::end(), line, output);
     }
 
     void Flush() const {}
@@ -129,4 +130,4 @@ class Multiple {
 } // namespace vocab
 } // namespace lm
 
-#endif // LM_FILTER_VOCAB_H__
+#endif // LM_FILTER_VOCAB_H

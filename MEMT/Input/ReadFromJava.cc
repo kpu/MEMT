@@ -48,7 +48,7 @@ namespace {
 static const AlignType kAlignJavaMap[] = {AL_EXACT, AL_SNOWBALL_STEM, AL_WN_SYNONYMY, AL_PARAPHRASE};
 
 // convert *fields to Ret.  Use line for error reporting purposes.
-template <class Ret> Ret Munch(util::PieceIterator<'\t'> &fields, size_t i, size_t j, const std::string &line) {
+template <class Ret> Ret Munch(util::TokenIter<util::SingleCharacter, false> &fields, size_t i, size_t j, const std::string &line) {
   if (!fields) throw TooFewColumns(i, j, line);
   Ret ret;
   try {
@@ -79,7 +79,7 @@ void ReadFromJava(const Config &config, std::istream &in, Input &input, size_t e
   for (size_t i = 0; i < num; ++i) {
     for (size_t j = i + 1; j < num; ++j) {
       while (getline(in, line) && (!line.empty())) {
-        util::PieceIterator<'\t'> fields(line);
+        util::TokenIter<util::SingleCharacter, false> fields(line, '\t');
         size_t first = Munch<size_t>(fields, i, j, line);
         size_t second = Munch<size_t>(fields, i, j, line);
         unsigned int type_int = Munch<unsigned int>(fields, i, j, line);

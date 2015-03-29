@@ -1,1 +1,1 @@
-lib controller_sentence_options : Options.cc /util//util_options ../../Decoder//decoder_options ../../Input//input_options ../../Strategy/Legacy//strategy_legacy_options ../../Output//output_options ../../..//boost_program_options ;
+fakelib controller_sentence_options : Options.cc /util//kenutil ../../Decoder//decoder_options ../../Input//input_options ../../Strategy/Legacy//strategy_legacy_options ../../Output//output_options ../../..//boost_program_options ;

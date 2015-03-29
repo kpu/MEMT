@@ -1,93 +1,45 @@
-#ifndef UTIL_POOL__
-#define UTIL_POOL__
+// Very simple pool.  It can only allocate memory.  And all of the memory it
+// allocates must be freed at the same time.  
 
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/optional.hpp>
-#include <boost/thread.hpp>
+#ifndef UTIL_POOL_H
+#define UTIL_POOL_H
 
-#include <stdlib.h>
+#include <vector>
 
-#include "util/pcqueue.hh"
+#include <stdint.h>
 
 namespace util {
 
-template <class HandlerT> class Worker : boost::noncopyable {
+class Pool {
   public:
-    typedef HandlerT Handler;
-    typedef typename Handler::Request Request;
+    Pool();
 
-    template <class Construct> Worker(PCQueue<Request> &in, Construct &construct, Request &poison)
-      : in_(in), handler_(construct), thread_(boost::ref(*this)), poison_(poison) {}
+    ~Pool();
 
-    // Only call from thread.
-    void operator()() {
-      Request request;
-      while (1) {
-        in_.Consume(request);
-        if (request == poison_) return;
-        try {
-          (*handler_)(request);
-        }
-        catch(std::exception &e) {
-          std::cerr << "Handler threw " << e.what() << std::endl;
-          abort();
-        }
-        catch(...) {
-          std::cerr << "Handler threw an exception, dropping request" << std::endl;
-          abort();
-        }
+    void *Allocate(std::size_t size) {
+      void *ret = current_;
+      current_ += size;
+      if (current_ < current_end_) {
+        return ret;
+      } else {
+        return More(size);
       }
     }
 
-    void Join() {
-      thread_.join();
-    }
+    void FreeAll();
 
   private:
-    PCQueue<Request> &in_;
+    void *More(std::size_t size);
 
-    boost::optional<Handler> handler_;
+    std::vector<void *> free_list_;
 
-    boost::thread thread_;
+    uint8_t *current_, *current_end_;
 
-    Request poison_;
-};
-
-template <class HandlerT> class Pool : boost::noncopyable {
-  public:
-    typedef HandlerT Handler;
-    typedef typename Handler::Request Request;
-
-    template <class Construct> Pool(size_t queue_length, size_t workers, Construct handler_construct, Request poison) : in_(queue_length), poison_(poison) {
-      for (size_t i = 0; i < workers; ++i) {
-        workers_.push_back(new Worker<Handler>(in_, handler_construct, poison));
-      }
-    }
-
-    ~Pool() {
-      for (size_t i = 0; i < workers_.size(); ++i) {
-        Produce(poison_);
-      }
-      for (typename boost::ptr_vector<Worker<Handler> >::iterator i = workers_.begin(); i != workers_.end(); ++i) {
-        i->Join();
-      }
-    }
-
-    void Produce(const Request &request) {
-      in_.Produce(request);
-    }
-
-    // For adding to the queue.
-    PCQueue<Request> &In() { return in_; }
-
-  private:
-    PCQueue<Request> in_;
-
-    boost::ptr_vector<Worker<Handler> > workers_;
-
-    Request poison_;
-};
+    // no copying
+    Pool(const Pool &);
+    Pool &operator=(const Pool &);
+}; 
 
 } // namespace util
 
-#endif // UTIL_POOL__
+#endif // UTIL_POOL_H

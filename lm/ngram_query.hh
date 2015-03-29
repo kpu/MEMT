@@ -1,103 +1,110 @@
-#ifndef LM_NGRAM_QUERY__
-#define LM_NGRAM_QUERY__
+#ifndef LM_NGRAM_QUERY_H
+#define LM_NGRAM_QUERY_H
 
 #include "lm/enumerate_vocab.hh"
 #include "lm/model.hh"
+#include "util/file_piece.hh"
+#include "util/usage.hh"
 
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
+#include <ostream>
+#include <istream>
 #include <string>
 
-#include <ctype.h>
-#if !defined(_WIN32) && !defined(_WIN64)
-#include <sys/resource.h>
-#include <sys/time.h>
-#endif
+#include <math.h>
 
 namespace lm {
 namespace ngram {
 
-#if !defined(_WIN32) && !defined(_WIN64)
-float FloatSec(const struct timeval &tv) {
-  return static_cast<float>(tv.tv_sec) + (static_cast<float>(tv.tv_usec) / 1000000000.0);
-}
-#endif
-
-void PrintUsage(const char *message) {
-#if !defined(_WIN32) && !defined(_WIN64)
-  struct rusage usage;
-  if (getrusage(RUSAGE_SELF, &usage)) {
-    perror("getrusage");
-    return;
+struct BasicPrint {
+  void Word(StringPiece, WordIndex, const FullScoreReturn &) const {}
+  void Line(uint64_t oov, float total) const {
+    std::cout << "Total: " << total << " OOV: " << oov << '\n';
   }
-  std::cerr << message;
-  std::cerr << "user\t" << FloatSec(usage.ru_utime) << "\nsys\t" << FloatSec(usage.ru_stime) << '\n';
+  void Summary(double, double, uint64_t, uint64_t) {}
+  
+};
 
-  // Linux doesn't set memory usage :-(.  
-  std::ifstream status("/proc/self/status", std::ios::in);
-  std::string line;
-  while (getline(status, line)) {
-    if (!strncmp(line.c_str(), "VmRSS:\t", 7)) {
-      std::cerr << "rss " << (line.c_str() + 7) << '\n';
-      break;
-    }
+struct FullPrint : public BasicPrint {
+  void Word(StringPiece surface, WordIndex vocab, const FullScoreReturn &ret) const {
+    std::cout << surface << '=' << vocab << ' ' << static_cast<unsigned int>(ret.ngram_length)  << ' ' << ret.prob << '\t';
   }
-#endif
-}
 
-template <class Model> void Query(const Model &model, bool sentence_context, std::istream &in_stream, std::ostream &out_stream) {
-  PrintUsage("Loading statistics:\n");
+  void Summary(double ppl_including_oov, double ppl_excluding_oov, uint64_t corpus_oov, uint64_t corpus_tokens) {
+    std::cout << 
+      "Perplexity including OOVs:\t" << ppl_including_oov << "\n"
+      "Perplexity excluding OOVs:\t" << ppl_excluding_oov << "\n"
+      "OOVs:\t" << corpus_oov << "\n"
+      "Tokens:\t" << corpus_tokens << '\n'
+      ;
+  }
+};
+
+template <class Model, class Printer> void Query(const Model &model, bool sentence_context) {
+  Printer printer;
   typename Model::State state, out;
   lm::FullScoreReturn ret;
-  std::string word;
+  StringPiece word;
 
-  while (in_stream) {
+  util::FilePiece in(0);
+
+  double corpus_total = 0.0;
+  double corpus_total_oov_only = 0.0;
+  uint64_t corpus_oov = 0;
+  uint64_t corpus_tokens = 0;
+
+  while (true) {
     state = sentence_context ? model.BeginSentenceState() : model.NullContextState();
     float total = 0.0;
-    bool got = false;
-    unsigned int oov = 0;
-    while (in_stream >> word) {
-      got = true;
+    uint64_t oov = 0;
+
+    while (in.ReadWordSameLine(word)) {
       lm::WordIndex vocab = model.GetVocabulary().Index(word);
-      if (vocab == 0) ++oov;
       ret = model.FullScore(state, vocab, out);
-      total += ret.prob;
-      out_stream << word << '=' << vocab << ' ' << static_cast<unsigned int>(ret.ngram_length)  << ' ' << ret.prob << '\t';
-      state = out;
-      char c;
-      while (true) {
-        c = in_stream.get();
-        if (!in_stream) break;
-        if (c == '\n') break;
-        if (!isspace(c)) {
-          in_stream.unget();
-          break;
-        }
+      if (vocab == model.GetVocabulary().NotFound()) {
+        ++oov;
+        corpus_total_oov_only += ret.prob;
       }
-      if (c == '\n') break;
+      total += ret.prob;
+      printer.Word(word, vocab, ret);
+      ++corpus_tokens;
+      state = out;
     }
-    if (!got && !in_stream) break;
+    // If people don't have a newline after their last query, this won't add a </s>.
+    // Sue me.
+    try {
+      UTIL_THROW_IF('\n' != in.get(), util::Exception, "FilePiece is confused.");
+    } catch (const util::EndOfFileException &e) { break; }
     if (sentence_context) {
       ret = model.FullScore(state, model.GetVocabulary().EndSentence(), out);
       total += ret.prob;
-      out_stream << "</s>=" << model.GetVocabulary().EndSentence() << ' ' << static_cast<unsigned int>(ret.ngram_length)  << ' ' << ret.prob << '\t';
+      ++corpus_tokens;
+      printer.Word("</s>", model.GetVocabulary().EndSentence(), ret);
     }
-    out_stream << "Total: " << total << " OOV: " << oov << '\n';
- }
-  PrintUsage("After queries:\n");
+    printer.Line(oov, total);
+    corpus_total += total;
+    corpus_oov += oov;
+  }
+  printer.Summary(
+      pow(10.0, -(corpus_total / static_cast<double>(corpus_tokens))), // PPL including OOVs
+      pow(10.0, -((corpus_total - corpus_total_oov_only) / static_cast<double>(corpus_tokens - corpus_oov))), // PPL excluding OOVs
+      corpus_oov,
+      corpus_tokens);
 }
 
-template <class M> void Query(const char *file, bool sentence_context, std::istream &in_stream, std::ostream &out_stream) {
-  Config config;
-//  config.load_method = util::LAZY;
-  M model(file, config);
-  Query(model, sentence_context, in_stream, out_stream);
+template <class Model> void Query(const char *file, const Config &config, bool sentence_context, bool show_words) {
+  Model model(file, config);
+  if (show_words) {
+    Query<Model, FullPrint>(model, sentence_context);
+  } else {
+    Query<Model, BasicPrint>(model, sentence_context);
+  }
 }
 
 } // namespace ngram
 } // namespace lm
 
-#endif // LM_NGRAM_QUERY__
+#endif // LM_NGRAM_QUERY_H
 
 

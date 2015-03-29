@@ -1,24 +1,22 @@
-#ifndef LM_FILTER_COUNT_IO__
-#define LM_FILTER_COUNT_IO__
+#ifndef LM_FILTER_COUNT_IO_H
+#define LM_FILTER_COUNT_IO_H
 
 #include <fstream>
 #include <iostream>
 #include <string>
 
-#include <err.h>
-
+#include "util/fake_ofstream.hh"
+#include "util/file.hh"
 #include "util/file_piece.hh"
 
 namespace lm {
 
 class CountOutput : boost::noncopyable {
   public:
-    explicit CountOutput(const char *name) : file_(name, std::ios::out) {}
+    explicit CountOutput(const char *name) : file_(util::CreateOrThrow(name)) {}
 
     void AddNGram(const StringPiece &line) {
-      if (!(file_ << line << '\n')) {
-        err(3, "Writing counts file failed");
-      }
+      file_ << line << '\n';
     }
 
     template <class Iterator> void AddNGram(const Iterator &begin, const Iterator &end, const StringPiece &line) {
@@ -30,7 +28,7 @@ class CountOutput : boost::noncopyable {
     }
 
   private:
-    std::fstream file_;
+    util::FakeOFStream file_;
 };
 
 class CountBatch {
@@ -50,18 +48,18 @@ class CountBatch {
     }
 
     template <class Output> void Send(Output &out) {
-      for (util::PieceIterator<'\n'> line(StringPiece(&*buffer_.begin(), buffer_.size())); line; ++line) {
-        util::PieceIterator<'\t'> tabber(*line);
+      for (util::TokenIter<util::SingleCharacter> line(StringPiece(&*buffer_.begin(), buffer_.size()), '\n'); line; ++line) {
+        util::TokenIter<util::SingleCharacter> tabber(*line, '\t');
         if (!tabber) {
           std::cerr << "Warning: empty n-gram count line being removed\n";
           continue;
         }
-        util::PieceIterator<' '> words(*tabber);
+        util::TokenIter<util::SingleCharacter, true> words(*tabber, ' ');
         if (!words) {
           std::cerr << "Line has a tab but no words.\n";
           continue;
         }
-        out.AddNGram(words, util::PieceIterator<' '>::end(), *line);
+        out.AddNGram(words, util::TokenIter<util::SingleCharacter, true>::end(), *line);
       }
     }
 
@@ -76,7 +74,7 @@ template <class Output> void ReadCount(util::FilePiece &in_file, Output &out) {
   try {
     while (true) {
       StringPiece line = in_file.ReadLine();
-      util::PieceIterator<'\t'> tabber(line);
+      util::TokenIter<util::SingleCharacter> tabber(line, '\t');
       if (!tabber) {
         std::cerr << "Warning: empty n-gram count line being removed\n";
         continue;
@@ -88,4 +86,4 @@ template <class Output> void ReadCount(util::FilePiece &in_file, Output &out) {
 
 } // namespace lm
 
-#endif // LM_FILTER_COUNT_IO__
+#endif // LM_FILTER_COUNT_IO_H

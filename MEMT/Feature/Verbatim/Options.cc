@@ -17,7 +17,7 @@ class ParseAlignmentMask {
     explicit ParseAlignmentMask(input::AlignType &out) : out_(out) {}
 
     void operator()(const std::string &value) {
-      out_ = input::TypeFromNames(util::PieceIterator<' '>(value), util::PieceIterator<' '>::end());
+      out_ = input::TypeFromNames(util::TokenIter<util::SingleCharacter, true>(value, ' '), util::TokenIter<util::SingleCharacter, true>::end());
     }
 
   private:

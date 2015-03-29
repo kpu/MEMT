@@ -6,7 +6,7 @@
 #include "MEMT/Controller/Sentence.hh"
 
 #include "util/pcqueue.hh"
-#include "util/pool.hh"
+#include "util/thread_pool.hh"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -79,7 +79,7 @@ template <class SentTransitionT> class ConnectionTransition : boost::noncopyable
 
     SentTransition sent_transition_;
 
-    util::Pool<ConnectionHandler<Self, SentTransitionT> > connection_;
+    util::ThreadPool<ConnectionHandler<Self, SentTransitionT> > connection_;
 };
 
 } // namespace controller

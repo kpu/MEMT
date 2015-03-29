@@ -10,9 +10,8 @@
 #include "MEMT/Input/ReadDispatcher.hh"
 
 #include "util/pcqueue.hh"
-#include "util/pool.hh"
+#include "util/thread_pool.hh"
 #include "util/socket_concurrent_iostream.hh"
-#include "util/wait_semaphore.hh"
 
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/ref.hpp>
@@ -47,7 +46,7 @@ template <class TransitionT> class Connection {
         std::istream &in, std::ostream &out,
         Transition &transition,
         OutputBackend<Transition> &output_backend,
-        util::Pool<OutputHandler<Transition> > &output_pool) :
+        util::ThreadPool<OutputHandler<Transition> > &output_pool) :
       sequence_(0),
       in_(in), out_(out),
       transition_(transition),
@@ -115,7 +114,7 @@ template <class TransitionT> class Connection {
     Transition &transition_;
     
     OutputBackend<Transition> &output_backend_;
-    util::Pool<OutputHandler<Transition> > &output_pool_;
+    util::ThreadPool<OutputHandler<Transition> > &output_pool_;
 
     sentence::Config config_;
     sentence::ConfigOptions parser_;
@@ -186,7 +185,7 @@ template <class ConnTransitionT, class SentTransitionT> class ConnectionHandler 
     OutputBackend<SentTransition> output_backend_;
 
     // This pool must be of size 1.  Pool is used because it includes the PCQueue.
-    util::Pool<OutputHandler<SentTransition> > output_pool_;
+    util::ThreadPool<OutputHandler<SentTransition> > output_pool_;
 };
 
 } // namespace controller

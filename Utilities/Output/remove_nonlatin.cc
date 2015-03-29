@@ -32,7 +32,7 @@ int main() {
   std::string line;
   while (std::getline(std::cin, line)) {
     bool rest = false;
-    for (util::PieceIterator<' '> i(line); i; ++i) {
+    for (util::TokenIter<util::SingleCharacter, true> i(line, ' '); i; ++i) {
       if (!RemoveWord(*i)) {
         if (rest) std::cout << ' ';
         rest = true;

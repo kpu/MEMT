@@ -1,5 +1,5 @@
-#ifndef LM_RETURN__
-#define LM_RETURN__
+#ifndef LM_RETURN_H
+#define LM_RETURN_H
 
 #include <stdint.h>
 
@@ -33,7 +33,10 @@ struct FullScoreReturn {
    */
   bool independent_left;
   uint64_t extend_left; // Defined only if independent_left
+
+  // Rest cost for extension to the left.
+  float rest;
 };
 
 } // namespace lm
-#endif // LM_RETURN__
+#endif // LM_RETURN_H

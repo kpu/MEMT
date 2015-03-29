@@ -2,11 +2,13 @@
 
 #include "util/scoped.hh"
 #include "util/string_piece.hh"
+#include "util/string_piece_hash.hh"
 
 #include <boost/scoped_array.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/unordered_map.hpp>
 #include <boost/thread/once.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/utility.hpp>
 
 #include <unicode/normlzr.h>
 #include <unicode/ucasemap.h>
@@ -15,6 +17,7 @@
 #include <unicode/utf8.h>
 #include <unicode/utypes.h>
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -43,9 +46,18 @@ NormalizeException::NormalizeException(const UnicodeString &original, UErrorCode
   what_.append(u_errorName(code));
 }
 
+bool IsUTF8(const StringPiece &str) {
+  int32_t offset = 0;
+  int32_t length = static_cast<uint32_t>(str.size());
+  while (offset < length) {
+    UChar32 character;
+    U8_NEXT(str.data(), offset, (int32_t)str.size(), character);
+    if (character < 0) return false;
+  }
+  return true;
+}
+
 bool IsPunctuation(const StringPiece &str) throw(NotUTF8Exception) {
-  // TODO: is this MEMT-hack desirable?
-  if (*str.data() == '\'' || str == "n't") return true;
   int32_t offset = 0;
   int32_t length = static_cast<uint32_t>(str.size());
   while (offset < length) {
@@ -64,23 +76,64 @@ void ToLower(const UnicodeString &in, UnicodeString &out) {
   out.toLower();
 }
 
+namespace {
+class CaseMapWrap : boost::noncopyable {
+  public:
+    CaseMapWrap() : case_map_(NULL) {}
+
+    void Init() {
+      UErrorCode err_csm = U_ZERO_ERROR;
+      case_map_ = ucasemap_open(NULL, 0, &err_csm);
+      if (U_FAILURE(err_csm)) {
+        std::cerr << "Failed to initialize case map." << std::endl;
+        abort();
+      }
+    }
+
+    ~CaseMapWrap() {
+      if (case_map_) ucasemap_close(case_map_);
+    }
+
+    const UCaseMap *Get() const {
+      return case_map_;
+    }
+
+  private:
+    UCaseMap *case_map_;
+};
+
+CaseMapWrap kCaseMap;
+
+boost::once_flag CaseMapFlag = BOOST_ONCE_INIT;
+
+void InitCaseMap() {
+  kCaseMap.Init();
+}
+
+const UCaseMap *GetCaseMap() {
+  boost::call_once(CaseMapFlag, InitCaseMap);
+  return kCaseMap.Get();
+}
+
+} // namespace
+
 void ToLower(const StringPiece &in, std::string &out) throw(NotUTF8Exception) {
-  out.clear();
-
-  UErrorCode err_csm = U_ZERO_ERROR;
-  UErrorCode err_lower = U_ZERO_ERROR;
-  util::scoped_thing<UCaseMap, void, ucasemap_close> csm(ucasemap_open(NULL, 0, &err_csm));
-  size_t need = ucasemap_utf8ToLower(csm.get(), NULL, 0, in.data(), in.size(), &err_lower);
-  if (err_lower == U_BUFFER_OVERFLOW_ERROR) err_lower = U_ZERO_ERROR;
-  if (U_FAILURE(err_lower)) throw NotUTF8Exception(in, err_lower);
-  if (U_FAILURE(err_csm)) throw NotUTF8Exception(in, err_csm);
-
-  // Annoying copy here :-(
-  boost::scoped_array<char> temp(new char[need + 1]);
-  ucasemap_utf8ToLower(csm.get(), temp.get(), need, in.data(), in.size(), &err_lower);
-  if (U_FAILURE(err_lower)) throw NotUTF8Exception(in, err_lower);
-  if (U_FAILURE(err_csm)) throw NotUTF8Exception(in, err_csm);
-  out.assign(temp.get(), need);
+  const UCaseMap *csm = GetCaseMap();
+  while (true) {
+    UErrorCode err_lower = U_ZERO_ERROR;
+    size_t need = ucasemap_utf8ToLower(csm, &out[0], out.size(), in.data(), in.size(), &err_lower);
+    if (err_lower == U_BUFFER_OVERFLOW_ERROR) {
+      // Hopefully ensure convergence.
+      out.resize(std::max(out.size(), need) + 10);
+    } else if (U_FAILURE(err_lower)) {
+      throw NotUTF8Exception(in, err_lower);
+    } else if (need > out.size()) {
+      out.resize(need + 10);
+    } else {
+      out.resize(need);
+      return;
+    }
+  }
 }
 
 void Normalize(const UnicodeString &in, UnicodeString &out) throw(NotUTF8Exception, NormalizeException) {

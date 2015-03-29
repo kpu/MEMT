@@ -78,7 +78,7 @@ void ConfigOptions::Finish(const boost::program_options::variables_map &vm, size
     } else if (weight_string_ == "zero") {
       config_.weights.resize(expected_weights, 0.0);
     } else {
-      for (util::PieceIterator<' '> i(weight_string_); i; ++i) {
+      for (util::TokenIter<util::SingleCharacter, true> i(weight_string_, ' '); i; ++i) {
         config_.weights.push_back(boost::lexical_cast<LinearScore>(*i));
       }
     }

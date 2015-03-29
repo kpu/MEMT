@@ -1,7 +1,7 @@
-#ifndef LM_FILTER_THREAD_H__
-#define LM_FILTER_THREAD_H__
+#ifndef LM_FILTER_THREAD_H
+#define LM_FILTER_THREAD_H
 
-#include "util/pool.hh"
+#include "util/thread_pool.hh"
 
 #include <boost/utility/in_place_factory.hpp>
 
@@ -155,8 +155,8 @@ template <class Filter, class OutputBuffer, class RealOutput> class Controller :
 
     util::PCQueue<Batch*> to_read_;
     std::stack<Batch*> local_read_;
-    util::Pool<OutputWorker<Batch, RealOutput> > output_;
-    util::Pool<FilterWorker<Batch, Filter> > filter_;
+    util::ThreadPool<OutputWorker<Batch, RealOutput> > output_;
+    util::ThreadPool<FilterWorker<Batch, Filter> > filter_;
 
     uint64_t sequence_;
     InputBuffer *input_;
@@ -164,4 +164,4 @@ template <class Filter, class OutputBuffer, class RealOutput> class Controller :
 
 } // namespace lm
 
-#endif // LM_FILTER_THREAD_H__
+#endif // LM_FILTER_THREAD_H

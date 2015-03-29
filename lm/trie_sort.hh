@@ -1,7 +1,7 @@
 // Step of trie builder: create sorted files.  
 
-#ifndef LM_TRIE_SORT__
-#define LM_TRIE_SORT__
+#ifndef LM_TRIE_SORT_H
+#define LM_TRIE_SORT_H
 
 #include "lm/max_order.hh"
 #include "lm/word_index.hh"
@@ -18,7 +18,6 @@
 
 namespace util {
 class FilePiece;
-class TempMaker;
 } // namespace util
 
 namespace lm {
@@ -28,8 +27,6 @@ class SortedVocabulary;
 struct Config;
 
 namespace trie {
-
-void WriteOrThrow(FILE *to, const void *data, size_t size);
 
 class EntryCompare : public std::binary_function<const void*, const void*, bool> {
   public:
@@ -103,15 +100,15 @@ class SortedFiles {
     }
 
   private:
-    void ConvertToSorted(util::FilePiece &f, const SortedVocabulary &vocab, const std::vector<uint64_t> &counts, const util::TempMaker &maker, unsigned char order, PositiveProbWarn &warn, void *mem, std::size_t mem_size);
+    void ConvertToSorted(util::FilePiece &f, const SortedVocabulary &vocab, const std::vector<uint64_t> &counts, const std::string &prefix, unsigned char order, PositiveProbWarn &warn, void *mem, std::size_t mem_size);
     
     util::scoped_fd unigram_;
 
-    util::scoped_FILE full_[kMaxOrder - 1], context_[kMaxOrder - 1];
+    util::scoped_FILE full_[KENLM_MAX_ORDER - 1], context_[KENLM_MAX_ORDER - 1];
 };
 
 } // namespace trie
 } // namespace ngram
 } // namespace lm
 
-#endif // LM_TRIE_SORT__
+#endif // LM_TRIE_SORT_H

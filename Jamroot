@@ -17,4 +17,4 @@ build-project lm ;
 build-project util ;
 build-project MEMT ;
 
-install-bin-libs MEMT/Controller//MEMT MEMT/Input//Dump MEMT/Alignment//SummarizeAlignment lm//query lm//build_binary lm/filter//filter ;
+install-bin-libs MEMT/Controller//MEMT MEMT/Input//Dump MEMT/Alignment//SummarizeAlignment lm//query lm//build_binary lm/filter//filter util//programs ;

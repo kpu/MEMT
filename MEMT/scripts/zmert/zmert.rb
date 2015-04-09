@@ -122,7 +122,14 @@ def run_zmert(directory)
   Dir.chdir(directory + '/zmert') do
     command = escape_shell_array(["java", "-Xms1G", "-Xmx3G", "-cp", AVENUE_DIR + "/Utilities/scoring/meteor-1.0/dist/meteor-1.0/meteor.jar:" + AVENUE_DIR + "/Utilities/Tuning/zmert.jar", "joshua.zmert.ZMERT","-maxMem", "1000", "zmert_config.txt"])
     $stdout.puts "Running #{command}"
-    throw "Command '#{command}' failed" unless system(command)
+    #z-mert is buggy wrt , versus . otherwise
+    oldenv = ENV["LC_ALL"]
+    ENV["LC_ALL"] = "C"
+    begin
+      throw "Command '#{command}' failed" unless system(command)
+    ensure
+      ENV["LC_ALL"] = oldenv
+    end
   end
 end
 

@@ -44,7 +44,7 @@ def count_sentences(matched)
 end
 
 #Because Omar wrongly decided to default to one CPU.  
-closeme=IO.popen(AVENUE_DIR + '/util/dist/print_concurrency')
+closeme=IO.popen(AVENUE_DIR + '/bin/print_concurrency')
 response=closeme.read.to_i
 closeme.close
 CONCURRENCY = (response==0 ? 1 : response)
@@ -61,7 +61,7 @@ def write_zmert_config(directory, zmert_args, refs_per_sentence, nbest)
 ")
 end
 
-LOWERCASER_DIR=AVENUE_DIR + "/util/dist"
+LOWERCASER_DIR=AVENUE_DIR + "/bin"
 throw "Lowercaser is not executable.  Compile it in #{AVENUE_DIR}/util" unless File.executable?(LOWERCASER_DIR + '/lower')
 append_colon_environment("LD_LIBRARY_PATH", LOWERCASER_DIR)
 def lowercase_file(from, to)

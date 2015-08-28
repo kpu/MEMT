@@ -120,6 +120,7 @@ end
 
 def run_zmert(directory)
   Dir.chdir(directory + '/zmert') do
+    #the original "-maxMem" of Joshua ZMERT is 1000, if your RAM is large enough, I strongly suggested to set it as large as possible 
     command = escape_shell_array(["java", "-Xms1G", "-Xmx3G", "-cp", AVENUE_DIR + "/Utilities/scoring/meteor-1.0/dist/meteor-1.0/meteor.jar:" + AVENUE_DIR + "/Utilities/Tuning/zmert.jar", "joshua.zmert.ZMERT","-maxMem", "1000", "zmert_config.txt"])
     $stdout.puts "Running #{command}"
     #z-mert is buggy wrt , versus . otherwise
